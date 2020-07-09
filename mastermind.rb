@@ -1,3 +1,4 @@
+require 'io/console'
 
 
 class MastermindGame
@@ -8,6 +9,10 @@ class MastermindGame
     brown: "brown",
     yellow: "yellow",
     cyan: "cyan",
+  }
+  @@pattern_choosers = {
+    computer: 0,
+    human: 1,
   }
   @@colors = %w(black white red brown yellow cyan)
 
@@ -21,16 +26,30 @@ class MastermindGame
     #actually called
   end
   
-  def get_pattern
+  def get_pattern(pattern_chooser)
     #return an array of four colors; option to have computer choose or human
-    temp = []
     @pattern = []
-    @pattern_length.times {
-      temp = @@colors.sample(1)
-      @pattern += temp
+    if pattern_chooser == @@pattern_choosers[:computer]
       temp = []
-    }
-    p @pattern
+      @pattern_length.times {
+        temp = @@colors.sample(1)
+        @pattern += temp
+        temp = []
+      }
+    else
+      i = 1
+      @pattern_length.times{
+        print "\nPick the #{i}" + ((i == 1) ? "st" : "nd") + " color of the pattern.  Options are #{@@colors.to_sentence}: "
+        ans = STDIN.noecho(&:gets).chomp.strip
+        while !@@colors.any?{|color| color.downcase == ans.downcase} #todo add logic to allow shortened names?
+          print "\nThat is not a valid option.  Options are #{@@colors.to_sentence}: "
+          ans = STDIN.noecho(&:gets).chomp.strip
+        end
+        print "\nColor accepted.  "
+        @pattern += [ans.downcase]
+        i+=1
+      }
+    end
   end
 
   def display_game
@@ -77,5 +96,24 @@ class String
   def reverse_color;  "\e[7m#{self}\e[27m" end
 end
 
+class Array
+  def to_sentence
+    default_words_connector     = ", "
+    default_two_words_connector = " and "
+    default_last_word_connector = ", and "
+
+    case length
+      when 0
+        ""
+      when 1
+        self[0].to_s.dup
+      when 2
+        "#{self[0]}#{default_two_words_connector}#{self[1]}"
+      else
+        "#{self[0...-1].join(default_words_connector)}#{default_last_word_connector}#{self[-1]}"
+    end
+  end
+end
+
 mastermind_game = MastermindGame.new(12, 4)
-mastermind_game.get_pattern
+mastermind_game.get_pattern(1)
