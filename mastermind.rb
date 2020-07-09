@@ -47,15 +47,43 @@ class MastermindGame
   end
 
   def get_guess
-    @current_guess = get_human_responses(@pattern_length, "Guess number #{@number_of_guesses - @guesses_left + 1}.  Pick the ", "guess.")
+    @current_guess = get_human_responses(@pattern_length, "Guess number #{@number_of_guesses - @guesses_left + 1}.  Pick the ", "guess.", 0)
     evaluate_guess
     @guesses_left -= 1
     @guesses.push(@current_guess)
-    puts "@guesses: #{@guesses}, guesses_left: #{@guesses_left}, and curent guess: #{@current_guess}"
+    #puts "@guesses: #{@guesses}, guesses_left: #{@guesses_left}, and curent guess: #{@current_guess}"
+  end
+
+  def get_guess_feedback
+    @correct_exactly_count = 0
+    @correct_color_count = 0
+    @pattern.each_index{|index|
+      if @pattern[index] == @current_guess[index]
+        @correct_exactly_count += 1
+      elsif @current_guess.any?{|item| item == @pattern[index]}
+        @correct_color_count += 1
+      end
+    }
+    raise "@correct_color_count + @correct_exactly_count cannot be higher than 4.  Something went wrong" if @correct_color_count + @correct_exactly_count > 4
+    puts "Feedback: Exaclty correct: #{@correct_exactly_count} and color correct: #{@correct_color_count}"
   end
 
   def evaluate_guess
     #returns the pins to display on the board showing what is correct (either red or white)
+    is_a_winner = true
+    @current_guess.each_index{|index|
+      if @current_guess[index] != @pattern[index]
+        is_a_winner = false
+        break
+      end
+    }
+    # puts "current_guess: #{@current_guess} and pattern: #{@pattern}"
+    if is_a_winner
+      puts "Great job.  You win!"
+    else
+      puts "Not Quite. Keep on guessing"
+      get_guess_feedback
+    end
   end
 
   def get_pattern(pattern_chooser)
@@ -69,11 +97,11 @@ class MastermindGame
         temp = []
       }
     else
-      @pattern = get_human_responses(@pattern_length, "Pick the ", "pattern.")
+      @pattern = get_human_responses(@pattern_length, "Pick the ", "pattern.", 1)
     end
   end
 
-  def get_human_responses(num_of_responses, msgPrefix, msgSuffix)
+  def get_human_responses(num_of_responses, msgPrefix, msgSuffix, hide)
     i = 1
     result = []
     num_of_responses.times{
@@ -89,7 +117,7 @@ class MastermindGame
         suffix = "th"
       end
         print "\n" + msgPrefix + "#{i}" + suffix + " color of the " + msgSuffix + "  Options are #{@@colors.to_sentence}: "
-      ans = STDIN.noecho(&:gets).chomp.strip
+      ans = (hide == 1) ? STDIN.noecho(&:gets).chomp.strip : gets.chomp.strip
       while !@@colors.any?{|color| color.downcase == ans.downcase} #todo add logic to allow shortened names?
         print "\nThat is not a valid option.  Options are #{@@colors.to_sentence}: "
         ans = STDIN.noecho(&:gets).chomp.strip
