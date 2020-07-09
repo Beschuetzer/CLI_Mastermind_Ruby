@@ -16,16 +16,48 @@ class MastermindGame
   }
   @@colors = %w(black white red brown yellow cyan)
 
-  def initialize(guesses, pattern_length)
+  def initialize(number_of_guesses, pattern_length)
     raise "pattern_length must be 6 or lower" if pattern_length > 6
-    @guesses = guesses
+    @number_of_guesses = number_of_guesses
     @pattern_length = pattern_length  
+    @guesses = []
+    @guesses_left = number_of_guesses
   end
 
   def play
     #actually called
+    display_instructions.include?('y') ? get_pattern(0) : get_pattern(1)
+    while @guesses_left > 0
+      get_guess
+    end
   end
-  
+
+  def display_instructions
+    print "MASTERMIND\nWould you like to play against the computer? "
+    ans = gets.chomp
+    while !ans.match(/^\s*[yYnN]([eE][sS]|[oO])*\s*$/) do                                  
+      print "Would you like to play against the computer?  Available options are 'y' and 'n': "
+      ans = gets.chomp.downcase
+    end
+    ans
+  end
+
+  def display_game
+    #prints out a 
+  end
+
+  def get_guess
+    @current_guess = get_human_responses(@pattern_length, "Guess number #{@number_of_guesses - @guesses_left + 1}.  Pick the ", "guess.")
+    evaluate_guess
+    @guesses_left -= 1
+    @guesses.push(@current_guess)
+    puts "@guesses: #{@guesses}, guesses_left: #{@guesses_left}, and curent guess: #{@current_guess}"
+  end
+
+  def evaluate_guess
+    #returns the pins to display on the board showing what is correct (either red or white)
+  end
+
   def get_pattern(pattern_chooser)
     #return an array of four colors; option to have computer choose or human
     @pattern = []
@@ -37,36 +69,38 @@ class MastermindGame
         temp = []
       }
     else
-      i = 1
-      @pattern_length.times{
-        print "\nPick the #{i}" + ((i == 1) ? "st" : "nd") + " color of the pattern.  Options are #{@@colors.to_sentence}: "
-        ans = STDIN.noecho(&:gets).chomp.strip
-        while !@@colors.any?{|color| color.downcase == ans.downcase} #todo add logic to allow shortened names?
-          print "\nThat is not a valid option.  Options are #{@@colors.to_sentence}: "
-          ans = STDIN.noecho(&:gets).chomp.strip
-        end
-        print "\nColor accepted.  "
-        @pattern += [ans.downcase]
-        i+=1
-      }
+      @pattern = get_human_responses(@pattern_length, "Pick the ", "pattern.")
     end
   end
 
-  def display_game
-    #prints out a 
+  def get_human_responses(num_of_responses, msgPrefix, msgSuffix)
+    i = 1
+    result = []
+    num_of_responses.times{
+      # puts "i.to_s[i.to_s.length-1] #{i.to_s[i.to_s.length-1]}"
+      case i.to_s[i.to_s.length-1]
+      when "1"
+        suffix = "st"
+      when "2"
+        suffix = "nd"
+      when "3"
+        suffix = "rd"
+      else        
+        suffix = "th"
+      end
+        print "\n" + msgPrefix + "#{i}" + suffix + " color of the " + msgSuffix + "  Options are #{@@colors.to_sentence}: "
+      ans = STDIN.noecho(&:gets).chomp.strip
+      while !@@colors.any?{|color| color.downcase == ans.downcase} #todo add logic to allow shortened names?
+        print "\nThat is not a valid option.  Options are #{@@colors.to_sentence}: "
+        ans = STDIN.noecho(&:gets).chomp.strip
+      end
+      print "\nColor accepted.  "
+      result += [ans.downcase]
+      i+=1
+    }
+    puts "\n"
+    result
   end
-
-  def get_guess
-
-  end
-
-  def evaluate_guess
-    #returns the pins to display on the board showing what is correct (either red or white)
-  end
-
-
-
-
 end
 
 class String
@@ -116,4 +150,4 @@ class Array
 end
 
 mastermind_game = MastermindGame.new(12, 4)
-mastermind_game.get_pattern(1)
+mastermind_game.play
