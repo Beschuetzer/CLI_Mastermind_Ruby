@@ -20,7 +20,6 @@ class MastermindGame
 
   def play
     @i = 0
-    #actually called
     display_instructions.include?('y') ? get_pattern(0) : get_pattern(1)
     while true
       puts "\nGUESSING PHASE:\n".send(@@colors[0]) if @i == 0
@@ -40,7 +39,6 @@ class MastermindGame
     puts "\nGuesses Remaining: #{@guesses_left}".send(@@colors[0])
     @guesses.each_index{|index1|
       print "\nGuess #{index1+1}:\t".send(@@colors[0])
-      #puts "cyan and @guesses[index]: #{@guesses[@guesses.length-1][index]} and @@colors[index]: #{ @@colors[index]}".cyan
       @guesses[index1].each_index{|index2|
         print_in_color(@guesses[index1][index2])
       }
@@ -49,7 +47,7 @@ class MastermindGame
     }
   end
 
-  def print_in_color(string, print_tabs=true)
+  def print_in_color(string, spacing_char="\t")
     case string
     when @@colors[0]
       print "#{string.send(@@colors[0])}"
@@ -64,7 +62,7 @@ class MastermindGame
     when @@colors[5]
       print "#{string.send(@@colors[5])}"
     end
-    print "\t" if print_tabs
+    print spacing_char
   end
 
   def display_instructions
@@ -97,9 +95,9 @@ class MastermindGame
     if @is_a_winner
       puts "Code breakers win this time!.  "
       @pattern.each{|color|
-        print_in_color(color, false)
+        print_in_color(color, " ")
       }
-      print " is the code.\n\n"
+      print "is the code.\n\n"
     else
       puts "Not Quite. Keep on guessing."
       get_guess_feedback
@@ -127,16 +125,13 @@ class MastermindGame
   end
   
   def get_color_count_in_guess(color)
-    res = 0 
-    @current_guess.each{|guess| res += 1 if color == guess }
-    #puts "@current guess: #{@current_guess} has #{res} instances of #{color}.  pattern: #{@pattern}"
-    res
-    @current_guess.each{|guess| res += 1 if color == guess }
-
+    @current_guess.reduce(0){|res, guess| 
+      res += 1 if color == guess 
+      res
+    }
   end
 
   def get_pattern(pattern_chooser)
-    #return an array of four colors; option to have computer choose or human
     @pattern = []
     if pattern_chooser == @@pattern_choosers[:computer]
       temp = []
