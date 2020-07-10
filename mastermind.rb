@@ -2,19 +2,11 @@ require 'io/console'
 
 
 class MastermindGame
-  @@colors_obj = {
-    black: "black",
-    white: "white",
-    red: "red",
-    brown: "brown",
-    yellow: "yellow",
-    cyan: "cyan",
-  }
   @@pattern_choosers = {
     computer: 0,
     human: 1,
   }
-  @@colors = %w(black white red brown yellow cyan)
+  @@colors = %w(green white red brown magenta cyan)
 
   def initialize(number_of_guesses, pattern_length)
     raise "pattern_length must be 6 or lower" if pattern_length > 6
@@ -27,21 +19,57 @@ class MastermindGame
   end
 
   def play
+    @i = 0
     #actually called
     display_instructions.include?('y') ? get_pattern(0) : get_pattern(1)
-    while @guesses_left > 0 && @is_a_winner == false
+    while true
+      puts "\nGUESSING PHASE:\n".send(@@colors[0]) if @i == 0
       get_guess
-      display_game
+      if @guesses_left > 0 && @is_a_winner == false
+        display_game
+      else
+        break
+      end
+      @i += 1
     end
+    puts "Codemakers prevail this time!\n"if @guesses_left <= 0
   end
   
   private
   def display_game
-    print "Guesses: #{@guesses} and feedbacks: #{@feedbacks}"
+    puts "\nGuesses Remaining: #{@guesses_left}".send(@@colors[0])
+    @guesses.each_index{|index1|
+      print "\nGuess #{index1+1}:\t".send(@@colors[0])
+      #puts "cyan and @guesses[index]: #{@guesses[@guesses.length-1][index]} and @@colors[index]: #{ @@colors[index]}".cyan
+      @guesses[index1].each_index{|index2|
+        print_in_color(@guesses[index1][index2])
+      }
+      print "\tExact: #{@feedbacks[index1][0]}\t".send(@@colors[2])
+      print "Color Correct: #{@feedbacks[index1][1]}"
+    }
+  end
+
+  def print_in_color(string, print_tabs=true)
+    case string
+    when @@colors[0]
+      print "#{string.send(@@colors[0])}"
+    when @@colors[1]
+      print "#{string}"
+    when @@colors[2]
+      print "#{string.send(@@colors[2])}"
+    when @@colors[3]
+      print "#{string.send(@@colors[3])}"
+    when @@colors[4]
+      print "#{string.send(@@colors[4])}"
+    when @@colors[5]
+      print "#{string.send(@@colors[5])}"
+    end
+    print "\t" if print_tabs
   end
 
   def display_instructions
-    print "MASTERMIND\nWould you like to play against the computer? "
+    puts "\n\nMASTERMIND:\n".send(@@colors[0])
+    print "Would you like to play against the computer? "
     ans = gets.chomp
     while !ans.match(/^\s*[yYnN]([eE][sS]|[oO])*\s*$/) do                                  
       print "Would you like to play against the computer?  Available options are 'y' and 'n': "
@@ -51,15 +79,14 @@ class MastermindGame
   end
 
   def get_guess
+    puts "\n\n" if @i != 0
     @current_guess = get_human_responses(@pattern_length, "Guess number #{@number_of_guesses - @guesses_left + 1}.  Pick the ", "guess.", 0)
     evaluate_guess
     @guesses_left -= 1
     @guesses.push(@current_guess)
-    #puts "@guesses: #{@guesses}, guesses_left: #{@guesses_left}, and curent guess: #{@current_guess}"
   end
 
   def evaluate_guess
-    #returns the pins to display on the board showing what is correct (either red or white)
     @is_a_winner = true
     @current_guess.each_index{|index|
       if @current_guess[index] != @pattern[index]
@@ -67,11 +94,14 @@ class MastermindGame
         break
       end
     }
-    # puts "current_guess: #{@current_guess} and pattern: #{@pattern}"
     if @is_a_winner
-      puts "Great job.  You win!"
+      puts "Code breakers win this time!.  "
+      @pattern.each{|color|
+        print_in_color(color, false)
+      }
+      print " is the code.\n\n"
     else
-      puts "Not Quite. Keep on guessing"
+      puts "Not Quite. Keep on guessing."
       get_guess_feedback
     end
   end
@@ -92,18 +122,17 @@ class MastermindGame
       end
     }
     raise "@correct_color_count + @correct_exactly_count cannot be higher than 4.  Something went wrong" if @correct_color_count + @correct_exactly_count > 4
-    puts "Feedback: Exaclty correct: #{@correct_exactly_count} and color correct: #{@correct_color_count}"
-    #puts "pattern: #{@pattern} and guess: #{@current_guess}"
     feedback = [@correct_exactly_count, @correct_color_count]
     @feedbacks.push(feedback)
   end
   
   def get_color_count_in_guess(color)
-    #counts how many time color is in current_guess
     res = 0 
     @current_guess.each{|guess| res += 1 if color == guess }
     #puts "@current guess: #{@current_guess} has #{res} instances of #{color}.  pattern: #{@pattern}"
     res
+    @current_guess.each{|guess| res += 1 if color == guess }
+
   end
 
   def get_pattern(pattern_chooser)
@@ -117,14 +146,17 @@ class MastermindGame
         temp = []
       }
     else
-      @pattern = get_human_responses(@pattern_length, "Pick the ", "pattern.", 1)
+      puts "\nINPUTTING THE SECRET CODE:".send(@@colors[0])
+      @pattern = get_human_responses(@pattern_length, "\nPick the ", "pattern.", 1)
     end
   end
 
   def get_human_responses(num_of_responses, msgPrefix, msgSuffix, hide)
+    # puts "\n"
     i = 1
     result = []
-    valid_responses = %w(bl w r br y c)
+    valid_responses = []
+    @@colors.each{|color| valid_responses += [color[0]]}
     num_of_responses.times{
       # puts "i.to_s[i.to_s.length-1] #{i.to_s[i.to_s.length-1]}"
       case i.to_s[i.to_s.length-1]
@@ -137,13 +169,13 @@ class MastermindGame
       else        
         suffix = "th"
       end
-        print "\n" + msgPrefix + "#{i}" + suffix + " color of the " + msgSuffix + "  Options are #{@@colors.to_sentence}: "
+        print msgPrefix + "#{i}" + suffix + " color of the " + msgSuffix + "  Options are #{@@colors.to_sentence}: "
         ans = (hide == 1) ? STDIN.noecho(&:gets).chomp.strip : gets.chomp.strip
       while !@@colors.any?{|color| color.downcase == ans.downcase} && !valid_responses.any?{|color| color == ans.downcase} #todo add logic to allow shortened names?
-        print "\nThat is not a valid option.  Options are #{@@colors.to_sentence}: "
+        puts "\n" if hide == 1
+        print "That is not a valid option.  Options are #{@@colors.to_sentence}: "
         ans = (hide == 1) ? STDIN.noecho(&:gets).chomp.strip : gets.chomp.strip
       end
-      print "Color accepted.  "
 
       case ans.downcase
       when valid_responses[0]
