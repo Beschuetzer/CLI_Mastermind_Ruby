@@ -28,19 +28,6 @@ class MastermindGame
   end
 
   private
-  def setup_variables(number_of_guesses, pattern_length, number_of_colors)
-    raise "pattern_length must be #{$max_pattern_length} or lower" if pattern_length > $max_pattern_length
-    @number_of_guesses = number_of_guesses
-    @pattern_length = pattern_length 
-    @number_of_colors = number_of_colors 
-    @@colors = @@colors[0..@number_of_colors-1]
-    @guesses_left = number_of_guesses
-    @guesses = []
-    @feedbacks = []
-    @is_a_winner = false
-    @i = 0
-  end
-
   def display_game
     puts "\nGuesses Remaining: #{@guesses_left}".send(@@colors[0])
     @guesses.each_index{|index1|
@@ -256,7 +243,15 @@ class MastermindGame
 
   def display_instructions_and_setup
     puts "\n\nMASTERMIND:\n".send(@@colors[0])
-    setup_variables(min_max_prompt(1,$max_guesses,"How many guesses?  Pick a value between"), min_max_prompt(1,$max_pattern_length,"Length of Pattern (4 is normal and 6 is challenging).  Pick a value between"), min_max_prompt(1,$max_number_of_colors,"How many Colors Available (6 is normal and 8 is challenging).  Pick a value between"))
+    @pattern_length = min_max_prompt(1,$max_pattern_length,"Length of Pattern (4 is normal and 6 is challenging).  Pick a value between")
+    @number_of_colors = min_max_prompt(1,$max_number_of_colors,"How many Colors Available (6 is normal and 8 is challenging).  Pick a value between")
+    @number_of_guesses = min_max_prompt(1,$max_guesses,"How many guesses (#{(@pattern_length.to_i*2+2)} is normal for pattern length of #{@pattern_length})?  Pick a value between")
+    @@colors = @@colors[0..@number_of_colors-1]
+    @guesses_left = @number_of_guesses
+    @guesses = []
+    @feedbacks = []
+    @is_a_winner = false
+    @i = 0
     yes_no_prompt("Would you like to play against the computer?")
   end
 
