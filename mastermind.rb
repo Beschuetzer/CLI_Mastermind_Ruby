@@ -10,37 +10,23 @@ class MastermindGame
   }
   @@colors = %w(green white red brown magenta cyan black blue gray)
   
-  def play()
-    display_instructions_and_setup.include?('y') ? get_pattern(0) : get_pattern(1)    
-    while true
-      puts "\nGUESSING PHASE (Guesses: #{@guesses_left}):\n".send(@@colors[0]) if @i == 0
-      get_guess
-      if @guesses_left > 0 && @is_a_winner == false
-        display_game
-      else
-        break
-      end
-      @i += 1
-    end    
-    display_game
-    print_results
-    get_play_again
-  end
-
-
 
 
 
   
   def get_knuth_algorithm_next_choice
-    @pattern_length = 6 #todo delete these @ and @@ lines once this def is complete and tested
+    @pattern_length = 4 #todo delete these @ and @@ lines once this def is complete and tested
     @pattern = %w(red white cyan magenta)
     @@colors = @@colors[0..5]
-    
+    @number_of_colors = 4
+
+
     next_possible_guesses = []
     residual = []
     # Create the set S of 1296 possible codes (1111, 1112 ... 6665, 6666)
-    power_set = get_power_set(@@colors, @@colors)
+    power_set = @@colors.product(*[@@colors] * 3)
+    puts "power_set: #{power_set}"
+    # puts "power_set_best length: #{power_set_best.length}, power_set len: #{power_set.length}, power_set_best == power_set: #{power_set_best == power_set}"
     # Start with initial guess 1122 (Knuth gives examples showing that other first guesses such as 1123, 1234 do not win in five tries on every code)
     # Step 3 - Play the guess to get a response of coloured and white pegs.
     first_guess = [@@colors[0], @@colors[0], @@colors[1], @@colors[1]]
@@ -62,7 +48,8 @@ class MastermindGame
     # 5- Apply minimax technique to find a next guess as follows: For each possible guess in next_possible_guesses, 
     #calculate how many possibilities in S would be eliminated for each possible colored/white peg score. 
     possible_feedback = get_possible_feedback
-    puts "possible_feedback: #{possible_feedback}"
+    possibilites_eliminated = 0
+    guess_scores = []
     next_possible_guesses.each_index{|guess|
       
     }
@@ -99,17 +86,6 @@ class MastermindGame
 
     possible_feedback
   end
-
-  def get_power_set(set1, set2)
-    (@pattern_length-1).times {
-      set1 = set1.product(set2)
-    }
-    set1.each_index{|index|
-      set1[index].flatten!
-    }
-    set1
-  end
-
 
 
 
