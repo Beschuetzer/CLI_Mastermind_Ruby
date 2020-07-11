@@ -89,6 +89,13 @@ class MastermindGame
       print "#{string.send(@@colors[4])}"
     when @@colors[5]
       print "#{string.send(@@colors[5])}"
+    when @@colors[6]
+      temp = "#{string.send(@@colors[6])}"
+      print "#{temp.send("bg_gray")}"
+    when @@colors[7]
+      print "#{string.send(@@colors[7])}"
+    when @@colors[8]
+      print "#{string.send(@@colors[8])}"
     end
     print spacing_char
   end
@@ -172,11 +179,34 @@ class MastermindGame
     end
   end
 
+  def get_valid_responses
+    @valid_responses = []
+    @@colors.each{|color| 
+      if color[0] != 'b'
+        @valid_responses += [color[0]]
+      else
+        if color[0..1] == "bl" 
+          #puts "color[0..1]: #{color[0..2]}"
+          @valid_responses += [color[0..2]]
+        else 
+          if !@@colors.any?{|color| color.match(/^\s*bl/)}
+            #puts "color[0..1]: #{color[0]}"
+            @valid_responses += [color[0]]
+          else
+            #puts "color[0..1]: #{color[0..1]}"
+            @valid_responses += [color[0..1]]
+          end
+
+        end
+      end
+    }
+  end
+
   def get_human_responses(num_of_responses, msgPrefix, msgSuffix, hide)
     i = 1
     result = []
-    valid_responses = []
-    @@colors.each{|color| valid_responses += [color[0]]}
+    get_valid_responses
+      
     num_of_responses.times{
       case i.to_s[i.to_s.length-1]
         when "1"
@@ -190,24 +220,30 @@ class MastermindGame
       end
         print msgPrefix + "#{i}" + suffix + " color of the " + msgSuffix + "  Options are #{@@colors.to_sentence}: "
         ans = (hide == 1) ? STDIN.noecho(&:gets).chomp.strip : gets.chomp.strip
-      while !@@colors.any?{|color| color.downcase == ans.downcase} && !valid_responses.any?{|color| color == ans.downcase} #todo add logic to allow shortened names?
+      while !@@colors.any?{|color| color.downcase == ans.downcase} && !@valid_responses.any?{|color| color == ans.downcase} #todo add logic to allow shortened names?
         puts "\n" if hide == 1
         print "That is not a valid option.  Options are #{@@colors.to_sentence}: "
         ans = (hide == 1) ? STDIN.noecho(&:gets).chomp.strip : gets.chomp.strip
       end
       case ans.downcase
-        when valid_responses[0]
+        when @valid_responses[0]
           ans = @@colors[0]
-        when valid_responses[1]
+        when @valid_responses[1]
           ans = @@colors[1]
-        when valid_responses[2]
+        when @valid_responses[2]
           ans = @@colors[2]
-        when valid_responses[3]
+        when @valid_responses[3]
           ans = @@colors[3]
-        when valid_responses[4]
+        when @valid_responses[4]
           ans = @@colors[4]
-        when valid_responses[5]
+        when @valid_responses[5]
           ans = @@colors[5]
+        when @valid_responses[6]
+          ans = @@colors[6]
+        when @valid_responses[7]
+          ans = @@colors[7]
+        when @valid_responses[8]
+          ans = @@colors[8]
       end
       result += [ans.downcase]
       i+=1
@@ -304,5 +340,5 @@ class Array
 end
 
 mastermind_game = MastermindGame.new()
-#mastermind_game.get_knuth_algorithm_next_choice
-mastermind_game.play()
+mastermind_game.get_knuth_algorithm_next_choice
+#mastermind_game.play()
