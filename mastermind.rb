@@ -1,6 +1,6 @@
 require 'io/console'
 $max_pattern_length = 6
-$max_guesses = $max_pattern_length * 2
+$max_guesses = $max_pattern_length * 3
 $max_number_of_colors = 9
 
 class MastermindGame
@@ -256,7 +256,7 @@ class MastermindGame
 
   def display_instructions_and_setup
     puts "\n\nMASTERMIND:\n".send(@@colors[0])
-    setup_variables(min_max_prompt(1,$max_guesses,"How many guesses (10 is normal and 12 is challenging).  Pick a value between"), min_max_prompt(1,$max_pattern_length,"Length of Pattern (4 is normal and 6 is challenging).  Pick a value between"), min_max_prompt(1,$max_number_of_colors,"How many Colors Available (6 is normal and 8 is challenging).  Pick a value between"))
+    setup_variables(min_max_prompt(1,$max_guesses,"How many guesses?  Pick a value between"), min_max_prompt(1,$max_pattern_length,"Length of Pattern (4 is normal and 6 is challenging).  Pick a value between"), min_max_prompt(1,$max_number_of_colors,"How many Colors Available (6 is normal and 8 is challenging).  Pick a value between"))
     yes_no_prompt("Would you like to play against the computer?")
   end
 
@@ -316,5 +316,4 @@ class Array
 end
 
 mastermind_game = MastermindGame.new()
-mastermind_game.get_knuth_algorithm_next_choice
-#mastermind_game.play()
+mastermind_game.play()
