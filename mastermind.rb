@@ -28,27 +28,56 @@ class MastermindGame
   end
 
   def get_knuth_algorithm_next_choice
+    @pattern_length = 4 #todo delete these @ and @@ lines once this def is complete and tested
+    @pattern = %w(red white cyan magenta)
+    @@colors = @@colors[0..5]
+    
+    next_possible_guesses = []
+    residual = []
     # Create the set S of 1296 possible codes (1111, 1112 ... 6665, 6666)
-    @pattern_length = 4 #todo delete this line once this def is complete and tested
-    power_set = @@colors
-    temp = @@colors
-    #puts "@@colors.length: #{@@colors.length}, temp: #{temp}, and power: #{power_set}, and pattern_length: #{@pattern_length}"
-    (@pattern_length-1).times {
-       power_set = power_set.product(temp)
-    }
-    power_set.each_index{|index|
-      power_set[index].flatten!
-    }
-    puts "#{power_set[110]}"
-    puts "set length: #{power_set.length}"
+    power_set = get_power_set(@@colors, @@colors)
     # Start with initial guess 1122 (Knuth gives examples showing that other first guesses such as 1123, 1234 do not win in five tries on every code)
-    # Play the guess to get a response of coloured and white pegs.
-    # If the response is four colored pegs, the game is won, the algorithm terminates.
-    # Otherwise, remove from S any code that would not give the same response if it (the guess) were the code.
-    # Apply minimax technique to find a next guess as follows: For each possible guess, that is, any unused code of the 1296 not just those in S, calculate how many possibilities in S would be eliminated for each possible colored/white peg score. The score of a guess is the minimum number of possibilities it might eliminate from S. A single pass through S for each unused code of the 1296 will provide a hit count for each coloured/white peg score found; the coloured/white peg score with the highest hit count will eliminate the fewest possibilities; calculate the score of a guess by using "minimum eliminated" = "count of elements in S" - (minus) "highest hit count". From the set of guesses with the maximum score, select one as the next guess, choosing a member of S whenever possible. (Knuth follows the convention of choosing the guess with the least numeric value e.g. 2345 is lower than 3456. Knuth also gives an example showing that in some cases no member of S will be among the highest scoring guesses and thus the guess cannot win on the next turn, yet will be necessary to assure a win in five.)
-    # Repeat from step 3.
+    # Step 3 - Play the guess to get a response of coloured and white pegs.
+    first_guess = [@@colors[0], @@colors[0], @@colors[1], @@colors[1]]
+    first_guess_feedback = get_guess_feedback(@pattern, first_guess)
+    #puts "pattern: #{@pattern} guess: #{first_guess} and guess_feedback: #{first_guess_feedback}"
+
+    # 4 - If 4,0 stop, otherwise remove from S any code that would not give the same response if it (the guess) were the code.
+    power_set.each_index{|index|
+      if_first_guess_were_pattern_feedback = get_guess_feedback(first_guess, power_set[index])
+      next_possible_guesses.push(power_set[index]) if first_guess_feedback == if_first_guess_were_pattern_feedback
+    }
+    temp = next_possible_guesses
+    next_possible_guesses = power_set - [first_guess] #todo change first_guess to next_guess when doing loop
+    power_set = temp
+    puts "power_set length: #{power_set.length}, contains ans: #{power_set.include?(@pattern)}"
+    puts "next_possible length: #{next_possible_guesses.length}, contains ans: #{next_possible_guesses.include?(@pattern)}"
+    #puts "residual length: #{residual.length}, contains ans: #{residual.include?(@pattern)}"
+   
+    # 5- Apply minimax technique to find a next guess as follows: For each possible guess, that is, any unused code of the 1296 not 
+    #just those in S, calculate how many possibilities in S would be eliminated for each possible colored/white peg score. 
+    #The score of a guess is the minimum number of possibilities it might eliminate from S. A single pass through S for each 
+    #unused code of the 1296 will provide a hit count for each coloured/white peg score found; the coloured/white peg score with 
+    #the highest hit count will eliminate the fewest possibilities; calculate the score of a guess by using 
+    #"minimum eliminated" = "count of elements in S" - (minus) "highest hit count". 
+    #From the set of guesses with the maximum score, select one as the next guess, choosing a member of S whenever possible. 
+    #(Knuth follows the convention of choosing the guess with the least numeric value e.g. 2345 is lower than 3456. 
+    #Knuth also gives an example showing that in some cases no member of S will be among the highest scoring guesses and thus 
+    #the guess cannot win on the next turn, yet will be necessary to assure a win in five.)
+    
+    # 6 - Repeat from step 3.
   end
   
+  def get_power_set(set1, set2)
+    (@pattern_length-1).times {
+      set1 = set1.product(set2)
+    }
+    set1.each_index{|index|
+      set1[index].flatten!
+    }
+    set1
+  end
+
   private
   def setup_variables(number_of_guesses, pattern_length, number_of_colors)
     raise "pattern_length must be #{$max_pattern_length} or lower" if pattern_length > $max_pattern_length
@@ -133,32 +162,30 @@ class MastermindGame
         break
       end
     }
-    get_guess_feedback
+    @feedbacks.push(get_guess_feedback(@pattern, @current_guess))
   end
 
-  def get_guess_feedback
+  def get_guess_feedback(pattern, guess)
     colors_added_count = Hash.new(0)
-    @correct_exactly_count = 0
-    @correct_color_count = 0
-    @pattern.each_index{|index|
-      if @pattern[index] == @current_guess[index]
-        @correct_exactly_count += 1
-      elsif @current_guess.any?{|item| item == @pattern[index]} 
-        color_count = get_color_count_in_guess(@pattern[index])
-        puts "color: #{@pattern[index]} and color_count: #{color_count}"
-        if (color_count >= colors_added_count[@pattern[index]] + 1)
-          @correct_color_count += 1
-          colors_added_count[@pattern[index]] += 1
+    correct_exactly_count = 0
+    correct_color_count = 0
+    pattern.each_index{|index|
+      if pattern[index] == guess[index]
+        correct_exactly_count += 1
+      elsif guess.any?{|item| item == pattern[index]} 
+        color_count = get_color_count_in_guess(pattern[index], guess)
+        if (color_count >= colors_added_count[pattern[index]] + 1)
+          correct_color_count += 1
+          colors_added_count[pattern[index]] += 1
         end
       end
     }
-    raise "@correct_color_count + @correct_exactly_count cannot be higher than #{@pattern_length}.  Something went wrong" if @correct_color_count + @correct_exactly_count > @pattern_length
-    feedback = [@correct_exactly_count, @correct_color_count]
-    @feedbacks.push(feedback)
+    raise "correct_color_count + correct_exactly_count cannot be higher than #{@pattern_length}.  Something went wrong" if correct_color_count + correct_exactly_count > @pattern_length
+    feedback = [correct_exactly_count, correct_color_count]
   end
   
-  def get_color_count_in_guess(color)
-    @current_guess.reduce(0){|res, guess| 
+  def get_color_count_in_guess(color, current_guess)
+    current_guess.reduce(0){|res, guess| 
       res += 1 if color == guess 
       res
     }
