@@ -1,18 +1,15 @@
 require 'io/console'
 $max_pattern_length = 15
 $max_guesses = $max_pattern_length * 2
+$max_number_of_colors = 9
 
 class MastermindGame
   @@pattern_choosers = {
     computer: 0,
     human: 1,
   }
-  @@colors = %w(green white red brown magenta cyan)
-
-  def initialize()
-    
-  end
-
+  @@colors = %w(green white red brown magenta cyan black blue gray)
+  
   def play()
     display_instructions_and_setup.include?('y') ? get_pattern(0) : get_pattern(1)    
     while true
@@ -29,12 +26,36 @@ class MastermindGame
     print_results
     get_play_again
   end
+
+  def get_knuth_algorithm_next_choice
+    # Create the set S of 1296 possible codes (1111, 1112 ... 6665, 6666)
+    @pattern_length = 4 #todo delete this line once this def is complete and tested
+    power_set = @@colors
+    temp = @@colors
+    #puts "@@colors.length: #{@@colors.length}, temp: #{temp}, and power: #{power_set}, and pattern_length: #{@pattern_length}"
+    (@pattern_length-1).times {
+       power_set = power_set.product(temp)
+    }
+    power_set.each_index{|index|
+      power_set[index].flatten!
+    }
+    puts "#{power_set[110]}"
+    puts "set length: #{power_set.length}"
+    # Start with initial guess 1122 (Knuth gives examples showing that other first guesses such as 1123, 1234 do not win in five tries on every code)
+    # Play the guess to get a response of coloured and white pegs.
+    # If the response is four colored pegs, the game is won, the algorithm terminates.
+    # Otherwise, remove from S any code that would not give the same response if it (the guess) were the code.
+    # Apply minimax technique to find a next guess as follows: For each possible guess, that is, any unused code of the 1296 not just those in S, calculate how many possibilities in S would be eliminated for each possible colored/white peg score. The score of a guess is the minimum number of possibilities it might eliminate from S. A single pass through S for each unused code of the 1296 will provide a hit count for each coloured/white peg score found; the coloured/white peg score with the highest hit count will eliminate the fewest possibilities; calculate the score of a guess by using "minimum eliminated" = "count of elements in S" - (minus) "highest hit count". From the set of guesses with the maximum score, select one as the next guess, choosing a member of S whenever possible. (Knuth follows the convention of choosing the guess with the least numeric value e.g. 2345 is lower than 3456. Knuth also gives an example showing that in some cases no member of S will be among the highest scoring guesses and thus the guess cannot win on the next turn, yet will be necessary to assure a win in five.)
+    # Repeat from step 3.
+  end
   
   private
-  def setup_variables(number_of_guesses, pattern_length)
+  def setup_variables(number_of_guesses, pattern_length, number_of_colors)
     raise "pattern_length must be #{$max_pattern_length} or lower" if pattern_length > $max_pattern_length
     @number_of_guesses = number_of_guesses
-    @pattern_length = pattern_length  
+    @pattern_length = pattern_length 
+    @number_of_colors = number_of_colors 
+    @@colors = @@colors[0..@number_of_colors-1]
     @guesses_left = number_of_guesses
     @guesses = []
     @feedbacks = []
@@ -72,7 +93,7 @@ class MastermindGame
     print spacing_char
   end
 
-   def print_pattern_in_color
+  def print_pattern_in_color
     @pattern.each{|color|
         print_in_color(color, " ")
     }
@@ -203,20 +224,6 @@ class MastermindGame
     end
   end
 
-  def get_parameters
-    guesses = 0
-    while !guesses.to_i.between?(1,$max_guesses) do                                  
-      print "Maximum Number of Guesses? (1 - #{$max_guesses}): "
-      guesses = gets.chomp.downcase
-    end
-    pattern_length = 0
-    while !pattern_length.to_i.between?(1,$max_pattern_length) do                                  
-      print "Pattern Length (Number of Colors to guess)? (1 - #{$max_pattern_length}): "
-      pattern_length = gets.chomp.downcase
-    end
-    [guesses.to_i, pattern_length.to_i]
-  end
-
   def yes_no_prompt(msg)
     ans = ""
     while !ans.match(/^\s*[yYnN]([eE][sS]|[oO])*\s*$/) do                                  
@@ -226,10 +233,18 @@ class MastermindGame
     ans
   end
 
+  def min_max_prompt(min, max, msg)
+    response = 0
+    while !response.to_i.between?(min,max) do                                  
+      print msg + " (#{min} - #{max}): "
+      response = gets.chomp.downcase
+    end
+    response.to_i
+  end
+
   def display_instructions_and_setup
     puts "\n\nMASTERMIND:\n".send(@@colors[0])
-    parameters = get_parameters
-    setup_variables(parameters[0], parameters[1])
+    setup_variables(min_max_prompt(1,$max_guesses,"How many guesses (10 is normal and 12 is challenging).  Pick a value between"), min_max_prompt(1,$max_pattern_length,"Length of Pattern (4 is normal and 6 is challenging).  Pick a value between"), min_max_prompt(1,$max_number_of_colors,"How many Colors Available (6 is normal and 8 is challenging).  Pick a value between"))
     yes_no_prompt("Would you like to play against the computer?")
   end
 
@@ -279,7 +294,15 @@ class Array
         "#{self[0...-1].join(default_words_connector)}#{default_last_word_connector}#{self[-1]}"
     end
   end
+
+  def powerset
+    return to_enum(:powerset) unless block_given?
+    1.upto(self.size) do |n|
+      self.combination(n).each{|i| yield i}
+    end
+  end
 end
 
 mastermind_game = MastermindGame.new()
+#mastermind_game.get_knuth_algorithm_next_choice
 mastermind_game.play()
