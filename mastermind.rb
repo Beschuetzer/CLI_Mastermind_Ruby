@@ -1,5 +1,5 @@
 require 'io/console'
-$max_pattern_length = 15
+$max_pattern_length = 6
 $max_guesses = $max_pattern_length * 2
 $max_number_of_colors = 9
 
@@ -28,7 +28,7 @@ class MastermindGame
   end
 
   def get_knuth_algorithm_next_choice
-    @pattern_length = 4 #todo delete these @ and @@ lines once this def is complete and tested
+    @pattern_length = 6 #todo delete these @ and @@ lines once this def is complete and tested
     @pattern = %w(red white cyan magenta)
     @@colors = @@colors[0..5]
     
@@ -54,8 +54,13 @@ class MastermindGame
     puts "next_possible length: #{next_possible_guesses.length}, contains ans: #{next_possible_guesses.include?(@pattern)}"
     #puts "residual length: #{residual.length}, contains ans: #{residual.include?(@pattern)}"
    
-    # 5- Apply minimax technique to find a next guess as follows: For each possible guess, that is, any unused code of the 1296 not 
-    #just those in S, calculate how many possibilities in S would be eliminated for each possible colored/white peg score. 
+    # 5- Apply minimax technique to find a next guess as follows: For each possible guess in next_possible_guesses, 
+    #calculate how many possibilities in S would be eliminated for each possible colored/white peg score. 
+    possible_feedback = get_possible_feedback
+    puts "possible_feedback: #{possible_feedback}"
+    next_possible_guesses.each_index{|guess|
+      
+    }
     #The score of a guess is the minimum number of possibilities it might eliminate from S. A single pass through S for each 
     #unused code of the 1296 will provide a hit count for each coloured/white peg score found; the coloured/white peg score with 
     #the highest hit count will eliminate the fewest possibilities; calculate the score of a guess by using 
@@ -68,6 +73,28 @@ class MastermindGame
     # 6 - Repeat from step 3.
   end
   
+  def get_possible_feedback
+    puts "start"
+    possible_feedback = []
+    i=0
+    (@pattern_length+1).times{
+      k=0
+      (@pattern_length+1).times {
+        if k+i <= @pattern_length
+          #puts "combination of #{arr1} and #{arr2}:" 
+          possible_feedback.push([i,k])
+        else 
+          break
+        end
+        k+=1
+      }
+      i+=1
+    }
+    puts "end"
+
+    possible_feedback
+  end
+
   def get_power_set(set1, set2)
     (@pattern_length-1).times {
       set1 = set1.product(set2)
